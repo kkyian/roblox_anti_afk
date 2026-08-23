@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compile Python
+        run: python3 -m py_compile roblox_anti_afk.py
+
+      - name: Lint property list
+        run: plutil -lint macos/Info.plist
+
+      - name: Check Objective-C syntax
+        run: |
+          clang \
+            -fobjc-arc \
+            -fsyntax-only \
+            macos/RobloxAntiAFKApp.m
+
+      - name: Build macOS app
+        run: ./build_app.sh

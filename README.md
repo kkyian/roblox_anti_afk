@@ -2,9 +2,28 @@
 
 A small macOS app that sends a periodic keyboard or mouse action while Roblox is active.
 
-Use it only in experiences where this kind of automation is allowed by the game rules.
+Use it only in experiences where this kind of automation is allowed by the game rules. This project is not affiliated with Roblox Corporation.
 
-## Build The App
+## Features
+
+- Native macOS app with Start, Stop, status, and activity log controls.
+- Optional Roblox focus guard so input is sent only while Roblox is the active app.
+- Configurable interval, jitter, and action type.
+- Browser-based Python fallback for macOS, Windows, and Linux.
+
+## Requirements
+
+- macOS 13 or newer for the native app.
+- Xcode Command Line Tools for building the native app:
+
+```bash
+xcode-select --install
+```
+
+- Python 3.10 or newer for the browser version.
+- Linux browser-version users also need `xdotool`.
+
+## Build The macOS App
 
 ```bash
 chmod +x build_app.sh
@@ -18,6 +37,8 @@ dist/Roblox Anti-AFK.app
 ```
 
 Double-click it in Finder to run it.
+
+`dist/` is generated build output and is ignored by the repository. If you want to share a built app, attach it to a GitHub Release instead of committing it.
 
 ## macOS Permission
 
@@ -45,3 +66,29 @@ python3 roblox_anti_afk.py
 ```
 
 The app opens at `http://127.0.0.1:8765`.
+
+To run without opening a browser automatically:
+
+```bash
+python3 roblox_anti_afk.py --no-browser
+```
+
+## Project Layout
+
+```text
+.
+├── build_app.sh
+├── macos/
+│   ├── Info.plist
+│   └── RobloxAntiAFKApp.m
+├── roblox_anti_afk.py
+└── README.md
+```
+
+## Publish Checklist
+
+- Run `./build_app.sh`.
+- Run `python3 -m py_compile roblox_anti_afk.py`.
+- Confirm `macos/Info.plist` passes `plutil -lint macos/Info.plist`.
+- Keep generated `dist/` output out of source control.
+- Choose and add a license if you want others to reuse or modify the code.

@@ -1,0 +1,22 @@
+# macOS local files
+.DS_Store
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.python-version
+.venv/
+venv/
+env/
+
+# Build output
+dist/
+build/
+*.app/
+
+# Editor and tool state
+.idea/
+.vscode/
+*.swp
+*.swo
+
