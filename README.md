@@ -23,6 +23,15 @@ xcode-select --install
 - Python 3.10 or newer for the browser version.
 - Linux browser-version users also need `xdotool`.
 
+## Run Checks
+
+```bash
+python3 -m py_compile roblox_anti_afk.py
+python3 -m unittest discover -s tests
+plutil -lint macos/Info.plist
+./build_app.sh
+```
+
 ## Build The macOS App
 
 ```bash
@@ -77,11 +86,15 @@ python3 roblox_anti_afk.py --no-browser
 
 ```text
 .
+├── .github/workflows/ci.yml
 ├── build_app.sh
+├── LICENSE
 ├── macos/
 │   ├── Info.plist
 │   └── RobloxAntiAFKApp.m
 ├── roblox_anti_afk.py
+├── tests/
+│   └── test_roblox_anti_afk.py
 └── README.md
 ```
 
@@ -89,6 +102,7 @@ python3 roblox_anti_afk.py --no-browser
 
 - Run `./build_app.sh`.
 - Run `python3 -m py_compile roblox_anti_afk.py`.
+- Run `python3 -m unittest discover -s tests`.
 - Confirm `macos/Info.plist` passes `plutil -lint macos/Info.plist`.
 - Keep generated `dist/` output out of source control.
-- Choose and add a license if you want others to reuse or modify the code.
+- Confirm `LICENSE` has the intended copyright holder.

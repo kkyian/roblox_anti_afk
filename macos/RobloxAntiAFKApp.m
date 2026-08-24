@@ -18,6 +18,7 @@ static NSString *AAFActionTitle(AAFAction action) {
         case AAFActionNudge:
             return @"Mouse nudge";
     }
+    return @"Unknown";
 }
 
 static NSString *AAFActionDetail(AAFAction action) {
@@ -29,6 +30,7 @@ static NSString *AAFActionDetail(AAFAction action) {
         case AAFActionNudge:
             return @"Moves the pointer 1 pixel and back.";
     }
+    return @"Choose a supported action.";
 }
 
 static BOOL AAFSetError(NSError **error, NSString *message) {

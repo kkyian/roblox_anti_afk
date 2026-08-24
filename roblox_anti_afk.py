@@ -49,6 +49,32 @@ class Settings:
     require_roblox_focus: bool = True
 
 
+def parse_bool(value: Any, default: bool = True) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off"}:
+            return False
+    raise ValueError("Roblox focus guard must be true or false.")
+
+
+def parse_port(value: str) -> int:
+    try:
+        port = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("Port must be a number.") from exc
+    if port < 0 or port > 65535:
+        raise argparse.ArgumentTypeError("Port must be between 0 and 65535.")
+    return port
+
+
 class InputController:
     name = "Unknown"
     focus_guard_available = False
@@ -481,7 +507,7 @@ class AntiAfkEngine:
         if jitter < 0 or jitter > 300:
             raise ValueError("Jitter must be between 0 and 300 seconds.")
         jitter = min(jitter, max(0, interval - 5))
-        require_roblox_focus = bool(payload.get("require_roblox_focus", True))
+        require_roblox_focus = parse_bool(payload.get("require_roblox_focus"), True)
         return Settings(
             interval=interval,
             jitter=jitter,
@@ -1245,7 +1271,13 @@ class AppHandler(BaseHTTPRequestHandler):
 
 
 def find_open_port(host: str, preferred_port: int) -> int:
-    for port in range(preferred_port, preferred_port + 50):
+    if preferred_port == 0:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind((host, 0))
+            return int(sock.getsockname()[1])
+
+    end_port = min(65535, preferred_port + 49)
+    for port in range(preferred_port, end_port + 1):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
@@ -1253,7 +1285,14 @@ def find_open_port(host: str, preferred_port: int) -> int:
             except OSError:
                 continue
             return port
-    raise RuntimeError("Could not find an open local port.")
+    raise RuntimeError(
+        f"Could not find an open local port from {preferred_port} to {end_port}."
+    )
+
+
+def browser_url(host: str, port: int) -> str:
+    display_host = "127.0.0.1" if host == "0.0.0.0" else host
+    return f"http://{display_host}:{port}"
 
 
 def make_handler(engine: AntiAfkEngine) -> type[AppHandler]:
@@ -1267,7 +1306,7 @@ def make_handler(engine: AntiAfkEngine) -> type[AppHandler]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Roblox Anti-AFK app.")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=parse_port, default=8765)
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
 
@@ -1278,9 +1317,18 @@ def main() -> int:
         return 1
 
     engine = AntiAfkEngine(controller)
-    port = find_open_port(args.host, args.port)
-    server = ThreadingHTTPServer((args.host, port), make_handler(engine))
-    url = f"http://{args.host}:{port}"
+    try:
+        port = find_open_port(args.host, args.port)
+        server = ThreadingHTTPServer((args.host, port), make_handler(engine))
+    except OSError as exc:
+        print(f"Failed to start local server: {exc}", file=sys.stderr)
+        return 1
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    server.daemon_threads = True
+    url = browser_url(args.host, port)
 
     print(f"Roblox Anti-AFK is running at {url}")
     print("Press Ctrl+C to quit.")
