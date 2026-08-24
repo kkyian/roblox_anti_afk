@@ -15,6 +15,9 @@ jobs:
       - name: Compile Python
         run: python3 -m py_compile roblox_anti_afk.py
 
+      - name: Run Python tests
+        run: python3 -m unittest discover -s tests
+
       - name: Lint property list
         run: plutil -lint macos/Info.plist
 
